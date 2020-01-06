@@ -1,6 +1,7 @@
 # device-auto-sync-with-service-worker
 
-A simple demo of how to automatically sync data across multiple devices for offline usage, using web technologies. Inspired by Google Sync.
+A simple demo of how to automatically sync data across multiple devices for offline usage, using web technologies.  
+Inspired by Google Sync.
 
 ## Goals
 
@@ -26,7 +27,7 @@ node server.js
 For when you are making your own implementation.
 
 - Use a [debounced function](https://lodash.com/docs/4.17.15#debounce) on the server to avoid sending too many syncs to the user's device.
-- Use a [queue](https://github.com/OptimalBits/bull).
+- Use a [queue plugin](https://github.com/OptimalBits/bull) to not reach the rate limit of push service.
 - Handle content conflicts.
 
 ## Related Contents
