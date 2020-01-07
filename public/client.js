@@ -14,10 +14,10 @@ fetch('/data')
     updateStatus(data.updatedAt)
   })
 
-const debouncedSync = debounce(() => {
+const debouncedSync = debounce(async () => {
   status.innerText = '🔄 Saving...'
 
-  fetch('/data', {
+  await fetch('/data', {
     method: 'PUT',
     headers: { 'Content-type': 'application/json' },
     body: JSON.stringify({
@@ -92,7 +92,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 function updateStatus (updatedAt) {
-  if (updatedAt === null) return;
+  if (updatedAt === null) return status.innerText = '';
 
   const minutesDiff = Math.round((Date.now() - updatedAt) / 1000 / 60)
   let sttsText;

@@ -28,7 +28,7 @@ self.addEventListener('fetch', async (event) => {
 
   if (url.includes('/data')) {
     if (method === 'GET') {
-      return event.respondWith(getLocallyData())
+      return event.respondWith(getDataFromServerFirstElseCache())
     }
     else if (method === 'PUT') {
       return event.respondWith(trySyncWithServer(request))
@@ -86,15 +86,19 @@ async function fromAssetsCache(request) {
   else return cache
 }
 
-async function getLocallyData() {
+async function getLocalData() {
   const data = await idbKeyval.get(localData)
 
-  return new Response(JSON.stringify(data), {
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Mock-Response': 'yes'
-    }
-  })
+  return new MockJsonResponse(data)
+}
+
+function getDataFromServerFirstElseCache() {
+  return getDataFromServer()
+    .then(async (data) => {
+      await idbKeyval.set(localData, data)
+      return new MockJsonResponse(data)
+    })
+    .catch(() => getLocalData())
 }
 
 async function trySyncWithServer(request) {
@@ -121,8 +125,11 @@ function sendDataToServer(data) {
   })
 }
 
-function getDataFromServer() {
-  return fetch('/data').then(res => res.json())
+async function getDataFromServer() {
+  return await fetch('/data', {
+    headers: { 'Ignore-Service-Worker': 'yes' },
+  })
+    .then(res => res.json())
 }
 
 function sendMessageToAllTabs(data) {
@@ -130,5 +137,14 @@ function sendMessageToAllTabs(data) {
     tabs.forEach(tab => {
       tab.postMessage(data)
     })
+  })
+}
+
+function MockJsonResponse(data) {
+  return new Response(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Mock-Response': 'yes'
+    }
   })
 }

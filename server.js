@@ -3,7 +3,6 @@ const bodyParser = require('body-parser')
 const cookieParser = require('cookie-parser')
 const { resolve } = require('path')
 const webpush = require('web-push')
-const ngrok = require('ngrok')
 
 let data = {
   text: '',
@@ -32,14 +31,18 @@ app.put('/data', async (req, res) => {
   const currentDeviceId = req.cookies.deviceId
   data = req.body
 
-  // Send a push to all registered devices
-  await Promise.allSettled(devices.map(device => {
+  const sendSyncToAllUserDevices = Promise.all(devices.map(device => {
     // Don't send back to device that sent
     if (device.deviceId === currentDeviceId) return Promise.resolve();
 
-    const payload = JSON.stringify({ tag: 'sync', data })
-    return webpush.sendNotification(device, payload)
+    try {
+      const payload = JSON.stringify({ tag: 'sync', data })
+      return webpush.sendNotification(device, payload)
+    } catch(err) {
+      return Promise.resolve()
+    }
   }))
+  await sendSyncToAllUserDevices
 
   return res.sendStatus(200)
 })
@@ -56,11 +59,7 @@ app.post('/add-device-to-sync-list', (req, res) => {
 })
 
 
-void async function bootstrap() {
-  const port = 3000
-  const url = await ngrok.connect(port)
-
-  app.listen(port, () => {
-    console.log(`Alive on ${url}`)
-  })
-}()
+const port = process.env.PORT || 3000
+app.listen(port, () => {
+  console.log(`READY ON PORT ${port}!`)
+})
