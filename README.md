@@ -3,6 +3,11 @@
 A simple demo of how to automatically sync data across multiple devices for offline usage, using web technologies.  
 Inspired by Google Sync.
 
+<!-- Remix Button -->
+<a href="https://glitch.com/edit/?utm_content=project_iagobruno-device-auto-sync-with-service-worker&utm_source=remix_this&utm_medium=button&utm_campaign=glitchButton#!/remix/iagobruno-device-auto-sync-with-service-worker">
+  <img src="https://cdn.glitch.com/2bdfb3f8-05ef-4035-a06e-2043962a3a13%2Fremix%402x.png?1513093958726" alt="remix this" height="33">
+</a>
+
 ## Goals
 
 - [x] Allow user to use the web app on multiple devices and make changes even offline.
