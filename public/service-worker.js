@@ -14,9 +14,7 @@ self.addEventListener('install', (event) => {
 })
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    self.clients.claim()
-  )
+  event.waitUntil(clients.claim())
 })
 
 self.addEventListener('fetch', async (event) => {
@@ -41,7 +39,7 @@ self.addEventListener('fetch', async (event) => {
   }
   // Other requests...
   else if (method === 'GET') {
-    return event.respondWith(fromCache(request))
+    return event.respondWith(fromAssetsCache(request))
   }
   else {
     return event.respondWith(fetch(request))
@@ -53,7 +51,6 @@ self.addEventListener('sync', (event) => {
     event.waitUntil(
       idbKeyval.get(localData).then(sendDataToServer)
     )
-    console.log('SYNC EVENT!')
   }
 })
 
@@ -65,7 +62,6 @@ self.addEventListener('push', (event) => {
       idbKeyval.set(localData, newData)
       .then(() => sendMessageToAllTabs('refresh-content'))
     )
-    console.log('SYNC PUSH RECEIVED!')
   }
 })
 
@@ -78,21 +74,20 @@ async function precacheAssets() {
     './client.js',
     './styles.css',
     'https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval.mjs',
-    'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.mjs'
+    'https://cdn.jsdelivr.net/npm/idb-keyval@3/dist/idb-keyval-iife.min.js',
+    'https://cdn.jsdelivr.net/npm/js-cookie@beta/dist/js.cookie.min.mjs',
   ])
 }
 
-async function fromCache(request) {
-  const cache = await caches.open(OFFLINE_CACHE)
+async function fromAssetsCache(request) {
+  const cache = await caches.open(OFFLINE_CACHE).then(cache => cache.match(request))
 
-  return cache.match(request)
-    .then(matching => {
-      return matching || Promise.reject('no-cache')
-    })
+  if (!cache) return Promise.reject('no-cache')
+  else return cache
 }
 
 async function getLocallyData() {
-  let data = await idbKeyval.get(localData)
+  const data = await idbKeyval.get(localData)
 
   return new Response(JSON.stringify(data), {
     headers: {
@@ -130,10 +125,10 @@ function getDataFromServer() {
   return fetch('/data').then(res => res.json())
 }
 
-async function sendMessageToAllTabs(data) {
-  const clients = await self.clients.matchAll({ type: 'window' })
-  clients.forEach(client => {
-    client.postMessage(data)
+function sendMessageToAllTabs(data) {
+  return clients.matchAll({ type: 'window' }).then(tabs => {
+    tabs.forEach(tab => {
+      tab.postMessage(data)
+    })
   })
-  return;
 }
